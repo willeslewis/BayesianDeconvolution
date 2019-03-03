@@ -1,0 +1,12 @@
+#ignore pkl files
+*.pkl
+
+#ignore checkpoints
+/.ipynb_checkpoints/*-checkpoint.ipynb
+
+
+
+#ignore Atlas
+*ATLAS*
+
+.DS_Store

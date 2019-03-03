@@ -1,0 +1,64 @@
+
+import numpy as np
+from scipy.signal import convolve
+
+def lnlikelihood(theta,x_avg,y_avg,cov_x,cov_y,ndim):
+
+    k = np.array(theta[0:int(ndim)])
+    
+    lnlike = 0
+    
+    vectors = ((y_avg)-convolve((x_avg),k,mode='same'))
+    
+    full_cov = cov_y + convolve(cov_x,k,mode='same')
+        
+    lnlike+= np.log(1/np.sqrt(2*np.pi*np.prod(full_cov))*np.exp(-0.5*
+                         np.matmul(np.matmul(vectors,np.diag(1/full_cov)),np.transpose(vectors))))
+    
+    return lnlike
+  
+                        
+def lnprior(theta,binlimits,alpha,ndim):
+        
+    k = np.array(theta[0:int(ndim)])
+
+    binwidths = np.ediff1d(binlimits)
+    
+    bincenters = np.zeros(len(binwidths))
+
+    for i in range(len(binwidths)):
+
+        bincenters[i] = 0.5*(binlimits[i]+binlimits[i+1])
+
+        
+    delta=np.zeros(len(binwidths)-1)
+
+    for i in range(len(binwidths)-1):
+
+        delta[i] = (k[i+1]/binwidths[i+1] - k[i]/binwidths[i])/(bincenters[i+1] - bincenters[i])
+                        
+    
+    numerator = np.abs(np.ediff1d(delta))
+
+    denomenator = np.zeros(len(numerator))
+
+    for i in range(len(denomenator)):
+
+        denomenator[i] = np.abs(delta[i]+delta[i+1])
+
+    if (sum(k>=0)==len(k) and sum(k<=1)==len(k)):
+    
+        return -alpha*np.sum(numerator/denomenator)
+                        
+    else:
+        
+        return -np.inf
+    
+                        
+def lnprob(theta,x_avg,y_avg,cov_x,cov_y,binlimits,alpha,ndim):
+    
+    
+    lp = lnprior(theta,binlimits,alpha,ndim)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlikelihood(theta,x_avg,y_avg,cov_x,cov_y,ndim)    
